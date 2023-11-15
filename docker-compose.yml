@@ -1,0 +1,98 @@
+version: '3'
+
+services:
+  jenkins:
+    container_name: jenkins
+    build: ./jenkins
+    ports:
+      - '8080:8080'
+      - '443:8443'
+      - '50000:50000'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins_home:/var/jenkins_home
+  
+  webapp:
+    container_name: webapp
+    image: nginx:latest
+    #build: ./webapp
+    ports:
+      - "80:80"
+    volumes:
+      - ./webapp:/var/www/html
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+    links:
+      - php-fpm
+  php-fpm:
+    image: php:8-fpm
+    volumes:
+      - ./webapp:/var/www/html
+    
+  sonarqube:
+
+    image: sonarqube:6.7.1
+
+    container_name: sonarqube
+
+    restart: unless-stopped
+
+    environment:
+
+      - SONARQUBE_JDBC_USERNAME=admin
+
+      - SONARQUBE_JDBC_PASSWORD=2100977
+
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://db:5432/sonarqube
+
+    ports:
+
+      - "9000:9000"
+
+      - "9092:9092"
+
+    volumes:
+
+      - sonarqube_conf:/opt/sonarqube/conf
+
+      - sonarqube_data:/opt/sonarqube/data
+
+      - sonarqube_extensions:/opt/sonarqube/extensions
+
+      - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
+
+
+  db:
+
+    image: postgres:10.1
+
+    container_name: db
+
+    restart: unless-stopped
+
+    environment:
+
+      - POSTGRES_USER=admin
+
+      - POSTGRES_PASSWORD=Admin123
+
+      - POSTGRES_DB=sonarqube
+
+    volumes:
+
+      - sonarqube_db:/var/lib/postgresql10
+
+      - postgresql_data:/var/lib/postgresql10/data
+  
+
+
+volumes:
+  postgresql_data:
+  sonarqube_bundled-plugins:
+  sonarqube_conf:
+  sonarqube_data:
+  sonarqube_db:
+  sonarqube_extensions:
+  jenkins_data:
+    driver: local
+    
+    
